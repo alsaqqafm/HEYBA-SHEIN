@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#1e3a8a" />
+    </linearGradient>
+    <linearGradient id="iconGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e0f2fe" />
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#091e42" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  <rect width="500" height="500" rx="36" fill="url(#bgGrad)" />
+  <circle cx="430" cy="70" r="140" fill="#ffffff" fill-opacity="0.04" />
+  <circle cx="60" cy="420" r="160" fill="#ffffff" fill-opacity="0.03" />
+  <g filter="url(#softShadow)" transform="translate(0, -15)">
+    <path d="M 205 130 C 205 90, 295 90, 295 130" fill="none" stroke="url(#iconGlow)" stroke-width="18" stroke-linecap="round" />
+    <path d="M 140 145 L 360 145 C 375 145, 386 158, 383 173 L 350 310 C 347 322, 336 330, 323 330 L 177 330 C 164 330, 153 322, 150 310 L 117 173 C 114 158, 125 145, 140 145 Z" fill="url(#iconGlow)" />
+    <g fill="none" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 190 195 H 290 L 305 255 H 210 Z" />
+      <path d="M 175 195 H 190 L 210 255 M 290 195 L 305 255" stroke-width="10" />
+      <circle cx="220" cy="278" r="8" fill="#1d4ed8" stroke="none" />
+      <circle cx="285" cy="278" r="8" fill="#1d4ed8" stroke="none" />
+    </g>
+    <g stroke="url(#iconGlow)" stroke-width="7" stroke-linecap="round">
+      <line x1="395" y1="210" x2="415" y2="210" />
+      <line x1="390" y1="235" x2="425" y2="235" />
+      <line x1="395" y1="260" x2="415" y2="260" />
+    </g>
+  </g>
+  <g text-anchor="middle">
+    <text x="250" y="375" font-family="'Tajawal', 'Cairo', sans-serif" font-weight="900" font-size="44" fill="#ffffff" letter-spacing="1">
+      هيبه شي ان
+    </text>
+    <text x="250" y="425" font-family="'Alexandria', sans-serif" font-weight="800" font-size="32" fill="#ffffff" letter-spacing="2">
+      HEYBA Shein
+    </text>
+    <text x="250" y="460" font-family="'Tajawal', sans-serif" font-weight="500" font-size="17" fill="#bae6fd" letter-spacing="0.5">
+      كل ما تحتاجه ... في مكان واحد
+    </text>
+  </g>
+</svg>
