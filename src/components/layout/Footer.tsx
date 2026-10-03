@@ -96,15 +96,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <ul className="space-y-3 text-xs text-slate-400">
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-brand-400 shrink-0" />
-                <span>+967 770 000 000</span>
+                <span>772606709</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-brand-400 shrink-0" />
-                <span>support@heybashein.com</span>
+                <span>mohammed.f.saqqaf@gmail.com</span>
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-brand-400 shrink-0" />
-                <span>الجمهورية اليمنية — صنعاء / عدن</span>
+                <span>اليمن - إب</span>
               </li>
             </ul>
           </div>

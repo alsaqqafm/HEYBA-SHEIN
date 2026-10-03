@@ -5,9 +5,9 @@ import { useToast } from '../../context/ToastContext';
 export const AdminPayments: React.FC = () => {
   const { showToast } = useToast();
 
-  const [jeebAccount, setJeebAccount] = useState('770000000');
+  const [jeebAccount, setJeebAccount] = useState('772606709');
   const [jeebName, setJeebName] = useState('متجر هيبة شي إن الإلكتروني');
-  const [kuraimiAccount, setKuraimiAccount] = useState('12345678');
+  const [kuraimiAccount, setKuraimiAccount] = useState('772606709');
   const [kuraimiName, setKuraimiName] = useState('شركة هيبة شي إن للتجارة');
 
   const handleSave = (e: React.FormEvent) => {

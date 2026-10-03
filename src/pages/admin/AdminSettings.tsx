@@ -6,9 +6,9 @@ export const AdminSettings: React.FC = () => {
   const { showToast } = useToast();
 
   const [appName, setAppName] = useState('HEYBA Shein | هيبة شي إن');
-  const [phone, setPhone] = useState('+967 770 000 000');
-  const [email, setEmail] = useState('support@heybashein.com');
-  const [address, setAddress] = useState('صنعاء - شارع حوبان / عدن - المعلا');
+  const [phone, setPhone] = useState('772606709');
+  const [email, setEmail] = useState('mohammed.f.saqqaf@gmail.com');
+  const [address, setAddress] = useState('اليمن - إب');
   const [invoiceFooter, setInvoiceFooter] = useState('شكراً لتسوقك من HEYBA Shein - نتمنى لك تجربة أزياء استثنائية!');
 
   const handleSave = (e: React.FormEvent) => {

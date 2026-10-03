@@ -24,7 +24,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 
     if (res.success) {
       showToast('تم تسجيل الدخول بنجاح! مرحباً بك في هيبة شي إن.');
-      if (email.toLowerCase().includes('admin')) {
+      if (email.trim().toLowerCase() === 'mohammed.f.saqqaf@gmail.com') {
         onNavigate('/admin');
       } else {
         onNavigate('/');
@@ -46,7 +46,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
         </div>
 
         <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-[11px] text-purple-900 leading-relaxed text-right">
-          💡 <strong>تجربة الإدارة:</strong> ادخل ببريد يحتوي كلمة admin مثل <code>admin@heybashein.com</code> للدخول التلقائي بصلاحية مدير.
+          💡 <strong>حساب الإدارة المصرح:</strong> <code>mohammed.f.saqqaf@gmail.com</code>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

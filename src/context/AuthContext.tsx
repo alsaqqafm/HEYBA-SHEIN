@@ -15,14 +15,16 @@ interface AuthContextType {
   refreshPoints: () => Promise<void>;
 }
 
+const ADMIN_EMAIL = 'mohammed.f.saqqaf@gmail.com';
+
 const MOCK_ADMIN_USER: UserProfile = {
   id: 'usr-admin-01',
-  name: 'المدير الرئيسي',
-  email: 'admin@heybashein.com',
+  name: 'محمد السقاف (المدير)',
+  email: ADMIN_EMAIL,
   role: 'ADMIN',
   email_verified: true,
-  phone: '+967770000000',
-  address: 'صنعاء - المركز الرئيسي',
+  phone: '772606709',
+  address: 'اليمن - إب',
   created_at: new Date().toISOString(),
 };
 
@@ -32,8 +34,8 @@ const MOCK_CUSTOMER_USER: UserProfile = {
   email: 'm.ali@example.com',
   role: 'CUSTOMER',
   email_verified: true,
-  phone: '+967771234567',
-  address: 'عدن - خور مكسر',
+  phone: '772606709',
+  address: 'اليمن - إب',
   created_at: new Date().toISOString(),
 };
 
@@ -103,22 +105,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
         if (data.user) {
-          const { data: profile } = await supabase
+          let { data: profile } = await supabase
             .from('users')
             .select('*')
             .eq('id', data.user.id)
             .single();
+
+          if (data.user.email?.toLowerCase() === ADMIN_EMAIL && profile?.role !== 'ADMIN') {
+            await supabase.from('users').update({ role: 'ADMIN' }).eq('id', data.user.id);
+            profile = profile ? { ...profile, role: 'ADMIN' } : profile;
+          }
+
           if (profile) setUser(profile);
         }
         return { success: true };
       } else {
-        if (email.toLowerCase().includes('admin')) {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (normalizedEmail === ADMIN_EMAIL) {
           setUser(MOCK_ADMIN_USER);
         } else {
           setUser({
             ...MOCK_CUSTOMER_USER,
-            email,
-            name: email.split('@')[0],
+            email: normalizedEmail,
+            name: normalizedEmail.split('@')[0],
+            role: 'CUSTOMER',
           });
         }
         return { success: true };

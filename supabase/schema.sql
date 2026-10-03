@@ -179,9 +179,9 @@ CREATE TABLE IF NOT EXISTS public.order_status_history (
 INSERT INTO public.settings (key, value) VALUES
 ('platform_info', '{
   "appName": "HEYBA Shein | هيبة شي إن",
-  "phone": "+967 770 000 000",
-  "email": "support@heybashein.com",
-  "address": "صنعاء - شارع حوبان / عدن - المعلا",
+  "phone": "772606709",
+  "email": "mohammed.f.saqqaf@gmail.com",
+  "address": "اليمن - إب",
   "currency": "ر.ي",
   "logoUrl": "/logo.svg",
   "invoiceFooter": "شكراً لتسوقك من HEYBA Shein - نتمنى لك تجربة أزياء استثنائية!"
@@ -189,13 +189,13 @@ INSERT INTO public.settings (key, value) VALUES
 ('payment_jeeb', '{
   "enabled": true,
   "accountName": "متجر هيبة شي إن",
-  "accountNumber": "770000000",
+  "accountNumber": "772606709",
   "instructions": "قم بالتحويل عبر محفظة جيب إلى الرقم أعلاه وأرفق رقم العملية المرجعي لتأكيد الطلب."
 }'::jsonb),
 ('payment_kuraimi', '{
   "enabled": true,
   "accountName": "شركة هيبة شي إن للتجارة",
-  "accountNumber": "12345678",
+  "accountNumber": "772606709",
   "instructions": "قم بالتحويل أو الإيداع عبر حساب الكريمي مُميز أعلاه وأدخل رقم الإشعار المرجعي."
 }'::jsonb),
 ('points_config', '{

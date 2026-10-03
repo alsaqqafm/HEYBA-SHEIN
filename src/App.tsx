@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
@@ -31,13 +31,33 @@ import { AdminPayments } from './pages/admin/AdminPayments';
 import { AdminSettings } from './pages/admin/AdminSettings';
 
 export function AppContent() {
-  const [currentPath, setCurrentPath] = useState<string>('/');
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    return window.location.pathname + window.location.search || '/';
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [adminTab, setAdminTab] = useState<string>('dashboard');
 
+  useEffect(() => {
+    const initialPath = window.location.pathname + window.location.search || '/';
+    if (!window.history.state) {
+      window.history.replaceState({ path: initialPath }, '', initialPath);
+    }
+
+    const handlePopState = (e: PopStateEvent) => {
+      const path = e.state?.path || window.location.pathname + window.location.search || '/';
+      setCurrentPath(path);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const handleNavigate = (path: string) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setCurrentPath(path);
+    if (path !== currentPath) {
+      window.history.pushState({ path }, '', path);
+      setCurrentPath(path);
+    }
   };
 
   // Extract query parameters if path contains query string

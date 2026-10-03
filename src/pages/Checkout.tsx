@@ -17,8 +17,8 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('JEEB');
   const [customerName, setCustomerName] = useState(user?.name || '');
-  const [phone, setPhone] = useState(user?.phone || '');
-  const [address, setAddress] = useState(user?.address || 'صنعاء - شارع حوبان');
+  const [phone, setPhone] = useState(user?.phone || '772606709');
+  const [address, setAddress] = useState(user?.address || 'اليمن - إب');
   const [senderName, setSenderName] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,7 +161,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
                 <input
                   type="text"
                   required
-                  placeholder="770000000"
+                  placeholder="772606709"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-left dir-ltr"
@@ -224,11 +224,11 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[11px] text-emerald-800 font-bold block">رقم حساب محفظة جيب للمتجر:</span>
-                    <span className="text-xl font-black text-emerald-900 tracking-wider">770000000</span>
+                    <span className="text-xl font-black text-emerald-900 tracking-wider">772606709</span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleCopy('770000000')}
+                    onClick={() => handleCopy('772606709')}
                     className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1"
                   >
                     <Copy className="w-3.5 h-3.5" /> نسخ
@@ -243,11 +243,11 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[11px] text-amber-800 font-bold block">رقم حساب الكريمي المُميز:</span>
-                    <span className="text-xl font-black text-amber-900 tracking-wider">12345678</span>
+                    <span className="text-xl font-black text-amber-900 tracking-wider">772606709</span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleCopy('12345678')}
+                    onClick={() => handleCopy('772606709')}
                     className="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-bold flex items-center gap-1"
                   >
                     <Copy className="w-3.5 h-3.5" /> نسخ

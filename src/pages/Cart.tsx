@@ -40,52 +40,57 @@ export const Cart: React.FC<CartProps> = ({ onNavigate }) => {
           {items.map((item) => (
             <div
               key={item.product_id}
-              className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm"
+              className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm hover:border-brand-200 transition-colors"
             >
-              <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="flex items-center gap-4 w-full sm:w-auto flex-1">
                 <img
                   src={item.product.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80'}
                   alt={item.product.name}
-                  className="w-20 h-24 object-cover rounded-xl bg-slate-100 shrink-0"
+                  className="w-20 h-24 sm:w-24 sm:h-28 object-cover rounded-xl bg-slate-100 shrink-0 border border-slate-100"
                 />
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-brand-600 block">{item.product.category?.name}</span>
-                  <h3 className="font-bold text-slate-900 text-sm line-clamp-2">{item.product.name}</h3>
-                  <div className="text-xs font-extrabold text-slate-800 pt-1">
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <span className="text-[11px] font-bold text-brand-600 block">{item.product.category?.name || 'أزياء'}</span>
+                  <h3 className="font-bold text-slate-900 text-sm leading-snug break-words">{item.product.name}</h3>
+                  <div className="text-xs font-extrabold text-slate-800 pt-0.5">
                     {item.price.toLocaleString()} ر.ي <span className="text-[10px] text-slate-400 font-normal">لكل قطعة</span>
                   </div>
                 </div>
               </div>
 
-              {/* Quantity Controls & Total */}
-              <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              {/* Quantity Controls, Total & Delete Action */}
+              <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                 <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
                   <button
+                    type="button"
                     onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                    className="w-7 h-7 rounded-lg bg-white shadow-sm font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center text-xs"
+                    className="w-8 h-8 rounded-lg bg-white shadow-sm font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center text-sm transition"
+                    title="إنقاص"
                   >
                     -
                   </button>
-                  <span className="w-8 text-center font-extrabold text-slate-900 text-xs">{item.quantity}</span>
+                  <span className="w-9 text-center font-extrabold text-slate-900 text-xs">{item.quantity}</span>
                   <button
+                    type="button"
                     onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
-                    className="w-7 h-7 rounded-lg bg-white shadow-sm font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center text-xs"
+                    className="w-8 h-8 rounded-lg bg-white shadow-sm font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center text-sm transition"
+                    title="زيادة"
                   >
                     +
                   </button>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 block font-medium">الإجمالي:</span>
-                  <span className="font-black text-brand-600 text-base">
+                <div className="text-left dir-ltr sm:text-right sm:dir-rtl">
+                  <span className="text-[10px] text-slate-400 block font-semibold">الإجمالي</span>
+                  <span className="font-black text-brand-600 text-base sm:text-lg">
                     {(item.price * item.quantity).toLocaleString()} ر.ي
                   </span>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => removeFromCart(item.product_id)}
-                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                  title="حذف"
+                  className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition shrink-0"
+                  title="حذف المنتج من السلة"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
