@@ -24,7 +24,14 @@ export const printInvoice = (order: Order) => {
     <tr>
       <td style="text-align: center; font-weight: bold;">${idx + 1}</td>
       <td>
-        <div style="font-weight: 700; color: #0f172a;">${item.product_name}</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          ${
+            item.product_image
+              ? `<img src="${item.product_image}" alt="" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;" />`
+              : ''
+          }
+          <div style="font-weight: 700; color: #0f172a;">${item.product_name}</div>
+        </div>
       </td>
       <td style="text-align: center; font-weight: 700;">${item.quantity}</td>
       <td style="text-align: left; direction: ltr; font-weight: 600;">${item.price.toLocaleString()} YER</td>
@@ -45,7 +52,7 @@ export const printInvoice = (order: Order) => {
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
         @page {
           size: A4 portrait;
-          margin: 10mm;
+          margin: 8mm;
         }
         * {
           box-sizing: border-box;
@@ -56,7 +63,7 @@ export const printInvoice = (order: Order) => {
           font-family: 'Tajawal', system-ui, sans-serif;
           color: #1e293b;
           background: #f8fafc;
-          padding: 20px;
+          padding: 16px;
           line-height: 1.5;
         }
         .invoice-box {
@@ -64,7 +71,7 @@ export const printInvoice = (order: Order) => {
           margin: auto;
           border: 1px solid #e2e8f0;
           border-radius: 16px;
-          padding: 28px;
+          padding: 24px;
           background: #ffffff;
           box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
@@ -72,9 +79,9 @@ export const printInvoice = (order: Order) => {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-bottom: 20px;
+          padding-bottom: 16px;
           border-bottom: 2px solid #1d4ed8;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
         .brand {
           display: flex;
@@ -82,8 +89,8 @@ export const printInvoice = (order: Order) => {
           gap: 14px;
         }
         .logo-box {
-          width: 52px;
-          height: 52px;
+          width: 48px;
+          height: 48px;
           background: linear-gradient(135deg, #1d4ed8, #1e40af);
           border-radius: 14px;
           display: flex;
@@ -95,7 +102,7 @@ export const printInvoice = (order: Order) => {
           box-shadow: 0 4px 12px rgba(29,78,216,0.3);
         }
         .brand-details h1 {
-          font-size: 22px;
+          font-size: 20px;
           font-weight: 900;
           color: #0f172a;
           margin: 0;
@@ -117,7 +124,7 @@ export const printInvoice = (order: Order) => {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 16px;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
         .card {
           background: #f8fafc;
@@ -141,7 +148,7 @@ export const printInvoice = (order: Order) => {
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
           font-size: 12px;
         }
         th {
@@ -163,7 +170,7 @@ export const printInvoice = (order: Order) => {
         .totals-container {
           display: flex;
           justify-content: flex-end;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
         .totals-box {
           width: 300px;
@@ -180,7 +187,7 @@ export const printInvoice = (order: Order) => {
           margin-bottom: 6px;
         }
         .row.grand {
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 900;
           color: #1d4ed8;
           border-top: 2px solid #cbd5e1;
@@ -189,21 +196,21 @@ export const printInvoice = (order: Order) => {
         }
         .footer-note {
           text-align: center;
-          padding-top: 16px;
+          padding-top: 14px;
           border-top: 1px solid #e2e8f0;
           font-size: 11px;
           color: #64748b;
         }
         @media print {
           body { padding: 0; background: #fff; }
-          .invoice-box { border: none; padding: 0; box-shadow: none; }
+          .invoice-box { border: none; padding: 0; box-shadow: none; max-width: 100%; }
           .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
-      <div class="no-print" style="text-align: center; margin-bottom: 20px;">
-        <button onclick="window.print()" style="padding: 12px 28px; background: #1d4ed8; color: white; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; font-family: inherit; font-size: 13px; shadow: 0 4px 12px rgba(29,78,216,0.3);">
+      <div class="no-print" style="text-align: center; margin-bottom: 16px;">
+        <button onclick="window.print()" style="padding: 10px 24px; background: #1d4ed8; color: white; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; font-family: inherit; font-size: 13px; box-shadow: 0 4px 12px rgba(29,78,216,0.3);">
           🖨️ طباعة الفاتورة الآن (Print / Save PDF)
         </button>
       </div>
@@ -232,26 +239,29 @@ export const printInvoice = (order: Order) => {
             <p><strong>حالة الطلب:</strong> ${order.status}</p>
             <p><strong>طريقة الدفع:</strong> ${order.payment_method === 'JEEB' ? 'محفظة جيب' : 'حساب الكريمي'}</p>
             <p><strong>الرقم المرجعي:</strong> ${order.payment_reference || 'غير مدخل'}</p>
+            <p><strong>النقاط المكتسبة:</strong> +${order.points_earned || 0} نقطة</p>
           </div>
 
           <div class="card">
-            <div class="card-title">بيانات العميل / Customer Details</div>
+            <div class="card-title">بيانات العميل والشحن / Customer Details</div>
             <p><strong>اسم العميل:</strong> ${order.customer_name}</p>
-            <p><strong>البريد الإلكتروني:</strong> ${order.customer_email}</p>
+            <p><strong>البريد الإلكتروني:</strong> ${order.customer_email || 'غير مدخل'}</p>
             <p><strong>رقم الهاتف:</strong> ${order.customer_phone}</p>
             <p><strong>عنوان التوصيل:</strong> ${order.delivery_address}</p>
+            ${order.payment_sender_name ? `<p><strong>اسم المحوّل:</strong> ${order.payment_sender_name}</p>` : ''}
+            ${order.notes ? `<p><strong>ملاحظات:</strong> ${order.notes}</p>` : ''}
           </div>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th style="width: 40px; text-align: center;">#</th>
+              <th style="width: 36px; text-align: center;">#</th>
               <th>اسم المنتج / Product Name</th>
-              <th style="width: 60px; text-align: center;">الكمية</th>
+              <th style="width: 55px; text-align: center;">الكمية</th>
               <th style="width: 100px;">سعر الوحدة</th>
-              <th style="width: 80px;">الخصم</th>
-              <th style="width: 110px;">الإجمالي</th>
+              <th style="width: 70px;">الخصم</th>
+              <th style="width: 100px;">الإجمالي</th>
             </tr>
           </thead>
           <tbody>
@@ -303,10 +313,10 @@ export const printInvoice = (order: Order) => {
 };
 
 export const generateInvoicePDF = (order: Order) => {
-  // First trigger full printable window for crisp rendering & print preview
+  // First trigger crisp print window with full browser PDF generator support
   printInvoice(order);
 
-  // Also build jsPDF document as fallback/download file
+  // Download fallback jsPDF file with complete customer & order payload
   try {
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -321,11 +331,11 @@ export const generateInvoicePDF = (order: Order) => {
     doc.rect(0, 0, 210, 36, 'F');
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('HEYBA Shein', 15, 16);
 
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.text(`Email: ${PLATFORM_INFO.email} | Phone: ${PLATFORM_INFO.phone} | Location: Yemen - Ibb`, 15, 26);
 
@@ -336,24 +346,27 @@ export const generateInvoicePDF = (order: Order) => {
     doc.setFont('helvetica', 'normal');
     doc.text(`Date: ${new Date(order.created_at).toLocaleDateString('en-US')}`, 195, 24, { align: 'right' });
 
-    const yPos = 46;
+    const yPos = 44;
 
+    // Customer details box
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(15, yPos, 88, 38, 2, 2, 'FD');
+    doc.roundedRect(15, yPos, 88, 44, 2, 2, 'FD');
 
     doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('CUSTOMER DETAILS', 19, yPos + 7);
+    doc.text('CUSTOMER & SHIPPING DATA', 19, yPos + 7);
 
     doc.setTextColor(darkNavy[0], darkNavy[1], darkNavy[2]);
     doc.setFontSize(8);
     doc.text(`Name: ${order.customer_name}`, 19, yPos + 15);
-    doc.text(`Email: ${order.customer_email}`, 19, yPos + 22);
+    doc.text(`Email: ${order.customer_email || 'N/A'}`, 19, yPos + 22);
     doc.text(`Phone: ${order.customer_phone}`, 19, yPos + 29);
+    doc.text(`Address: ${order.delivery_address}`, 19, yPos + 36);
 
+    // Order details box
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(107, yPos, 88, 38, 2, 2, 'FD');
+    doc.roundedRect(107, yPos, 88, 44, 2, 2, 'FD');
 
     doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.setFontSize(9);
@@ -364,7 +377,8 @@ export const generateInvoicePDF = (order: Order) => {
     doc.setFontSize(8);
     doc.text(`Payment: ${order.payment_method === 'JEEB' ? 'Jeeb Wallet' : 'Kuraimi Bank'}`, 111, yPos + 15);
     doc.text(`Ref No: ${order.payment_reference || 'N/A'}`, 111, yPos + 22);
-    doc.text(`Status: ${order.status}`, 111, yPos + 29);
+    doc.text(`Sender: ${order.payment_sender_name || 'N/A'}`, 111, yPos + 29);
+    doc.text(`Status: ${order.status} | Points: +${order.points_earned || 0}`, 111, yPos + 36);
 
     const tableBody = (order.items || []).map((item, index) => [
       (index + 1).toString(),
@@ -377,8 +391,8 @@ export const generateInvoicePDF = (order: Order) => {
 
     // @ts-expect-error autoTable plugin typing
     doc.autoTable({
-      startY: yPos + 44,
-      head: [['#', 'Item', 'Qty', 'Unit Price', 'Discount', 'Total']],
+      startY: yPos + 50,
+      head: [['#', 'Item Description', 'Qty', 'Unit Price', 'Discount', 'Total']],
       body: tableBody,
       theme: 'grid',
       headStyles: {
@@ -423,4 +437,3 @@ export const generateInvoicePDF = (order: Order) => {
     console.error('jsPDF Generation error:', err);
   }
 };
-

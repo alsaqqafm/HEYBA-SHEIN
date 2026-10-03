@@ -4,7 +4,9 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { apiCreateOrderAtomic } from '../lib/supabase';
-import type { PaymentMethod } from '../types';
+import type { Order, PaymentMethod } from '../types';
+import { saveOrderToStore } from '../lib/orders';
+import { InvoiceModal } from '../components/InvoiceModal';
 
 interface CheckoutProps {
   onNavigate: (path: string) => void;
@@ -23,6 +25,9 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
   const [paymentRef, setPaymentRef] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderCreatedId, setOrderCreatedId] = useState<string | null>(null);
+
+  const [createdOrderObj, setCreatedOrderObj] = useState<Order | null>(null);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   // Requirement #6 & #12: Prevent unverified accounts from completing checkout!
   if (user && !isEmailVerified) {
@@ -85,8 +90,39 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
       setIsSubmitting(false);
       if (res && (res.success || res.order_number)) {
         const orderNum = res.order_number || `HEYBA-2026-${Math.floor(100000 + Math.random() * 900000)}`;
-        clearCart();
+        const newOrder: Order = {
+          id: res.order_id || `ord-${Date.now()}`,
+          order_number: orderNum,
+          user_id: user.id,
+          customer_name: customerName,
+          customer_email: user.email,
+          customer_phone: phone,
+          delivery_address: address,
+          payment_method: paymentMethod,
+          payment_reference: paymentRef,
+          payment_sender_name: senderName,
+          status: 'NEW',
+          subtotal,
+          discount: 0,
+          delivery_fee: deliveryFee,
+          total: grandTotal,
+          points_earned: Math.floor(subtotal * 0.01),
+          created_at: new Date().toISOString(),
+          items: items.map((item, idx) => ({
+            id: `item-${Date.now()}-${idx}`,
+            product_id: item.product_id,
+            product_name: item.product.name,
+            product_image: item.product.images?.[0]?.image_url || '',
+            price: item.price,
+            quantity: item.quantity,
+            total: item.price * item.quantity,
+          })),
+        };
+
+        saveOrderToStore(newOrder);
+        setCreatedOrderObj(newOrder);
         setOrderCreatedId(orderNum);
+        clearCart();
         showToast('تم إرسال طلبك بنجاح! جاري مراجعة الدفع من قِبل الإدارة.', 'success');
       } else {
         showToast('فشل إنشاء الطلب. يرجى التحقق من توفر الكمية بالمخزون.', 'error');
@@ -100,6 +136,9 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
   if (orderCreatedId) {
     return (
       <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-100 space-y-6 max-w-lg mx-auto my-8 shadow-xl">
+        {showInvoiceModal && createdOrderObj && (
+          <InvoiceModal order={createdOrderObj} onClose={() => setShowInvoiceModal(false)} />
+        )}
         <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
           <CheckCircle2 className="w-12 h-12" />
         </div>
@@ -116,17 +155,25 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          {createdOrderObj && (
+            <button
+              onClick={() => setShowInvoiceModal(true)}
+              className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs"
+            >
+              عرض الفاتورة الآن 📄
+            </button>
+          )}
           <button
             onClick={() => onNavigate('/account')}
-            className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs"
+            className="flex-1 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs"
           >
-            متابعة طلباتي والفاتورة
+            سجل طلباتي
           </button>
           <button
             onClick={() => onNavigate('/')}
             className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs"
           >
-            العودة للرئيسية
+            الرئيسية
           </button>
         </div>
       </div>

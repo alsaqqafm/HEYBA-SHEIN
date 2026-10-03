@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Eye, Printer } from 'lucide-react';
 import type { Order, OrderStatus } from '../../types';
-import { generateInvoicePDF } from '../../lib/pdfGenerator';
+import { generateInvoicePDF, printInvoice } from '../../lib/pdfGenerator';
 import { apiUpdateOrderStatusAtomic } from '../../lib/supabase';
+import { getStoredOrders } from '../../lib/orders';
+import { InvoiceModal } from '../../components/InvoiceModal';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -13,8 +15,8 @@ const INITIAL_ADMIN_ORDERS: Order[] = [
     user_id: 'usr-cust-01',
     customer_name: 'محمد علي أحمد',
     customer_email: 'm.ali@example.com',
-    customer_phone: '+967 771 234 567',
-    delivery_address: 'صنعاء - شارع حوبان - بجوار المستشفى',
+    customer_phone: '771234567',
+    delivery_address: 'اليمن - إب - شارع العدين - بجوار المستشفى',
     subtotal: 27000,
     discount: 0,
     delivery_fee: 1500,
@@ -23,7 +25,7 @@ const INITIAL_ADMIN_ORDERS: Order[] = [
     payment_reference: '#REF-982312',
     payment_sender_name: 'محمد علي',
     status: 'PENDING_PAYMENT',
-    points_earned: 250,
+    points_earned: 270,
     created_at: '2026-10-02T12:00:00.000Z',
     items: [
       { id: '1', product_name: 'فستان أزرق ملكي فاخر للسهرات', price: 18500, quantity: 1, total: 18500 },
@@ -36,7 +38,15 @@ export const AdminOrders: React.FC = () => {
   const { showToast } = useToast();
   const { user } = useAuth();
 
-  const [ordersList, setOrdersList] = useState<Order[]>(INITIAL_ADMIN_ORDERS);
+  const [ordersList, setOrdersList] = useState<Order[]>([]);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    const stored = getStoredOrders();
+    const existingIds = new Set(stored.map((o) => o.id));
+    const merged = [...stored, ...INITIAL_ADMIN_ORDERS.filter((o) => !existingIds.has(o.id))];
+    setOrdersList(merged);
+  }, []);
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {
@@ -68,6 +78,10 @@ export const AdminOrders: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {selectedInvoiceOrder && (
+        <InvoiceModal order={selectedInvoiceOrder} onClose={() => setSelectedInvoiceOrder(null)} />
+      )}
+
       <div>
         <h1 className="text-2xl font-black text-white">إدارة الطلبات والتحقق من الدفع</h1>
         <p className="text-xs text-slate-400 mt-1">مراجعة التحويلات عبر محفظة جيب وحساب الكريمي وتغيير حالة الطلب</p>
@@ -83,20 +97,21 @@ export const AdminOrders: React.FC = () => {
                 <th className="p-4">طريقة ومستند الدفع</th>
                 <th className="p-4">الإجمالي النهائي</th>
                 <th className="p-4">الحالة</th>
-                <th className="p-4 text-center">الإجراءات والاعتماد</th>
+                <th className="p-4 text-center">الفاتورة والطباعة</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/60 text-slate-200">
               {ordersList.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-700/30 transition">
                   <td className="p-4">
-                    <span className="font-extrabold text-white block">{order.order_number}</span>
+                    <span className="font-extrabold text-white block font-mono">{order.order_number}</span>
                     <span className="text-[10px] text-slate-400">{new Date(order.created_at).toLocaleDateString('ar-YE')}</span>
                   </td>
 
                   <td className="p-4">
                     <span className="font-bold text-white block">{order.customer_name}</span>
-                    <span className="text-[10px] text-slate-400 block">{order.customer_phone}</span>
+                    <span className="text-[10px] text-slate-400 block font-mono dir-ltr">{order.customer_phone}</span>
+                    <span className="text-[10px] text-slate-400 block truncate max-w-xs">{order.customer_email}</span>
                     <span className="text-[10px] text-slate-500 block truncate max-w-xs">{order.delivery_address}</span>
                   </td>
 
@@ -109,6 +124,11 @@ export const AdminOrders: React.FC = () => {
                     <span className="text-[11px] font-mono font-bold text-slate-300 block mt-1">
                       Ref: {order.payment_reference || 'غير مدخل'}
                     </span>
+                    {order.payment_sender_name && (
+                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                        المحوّل: {order.payment_sender_name}
+                      </span>
+                    )}
                   </td>
 
                   <td className="p-4 font-black text-emerald-400 text-sm">
@@ -133,12 +153,29 @@ export const AdminOrders: React.FC = () => {
                   </td>
 
                   <td className="p-4 text-center">
-                    <button
-                      onClick={() => generateInvoicePDF(order)}
-                      className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-[11px] inline-flex items-center gap-1 transition shadow-sm"
-                    >
-                      <FileText className="w-3.5 h-3.5" /> طباعة الفاتورة PDF
-                    </button>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button
+                        onClick={() => setSelectedInvoiceOrder(order)}
+                        title="معاينة الفاتورة"
+                        className="p-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-bold text-[11px] inline-flex items-center gap-1 transition shadow-sm"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> الفاتورة
+                      </button>
+                      <button
+                        onClick={() => printInvoice(order)}
+                        title="طباعة الفاتورة"
+                        className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-bold text-[11px] inline-flex items-center gap-1 transition"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => generateInvoicePDF(order)}
+                        title="تحميل PDF"
+                        className="p-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-[11px] inline-flex items-center gap-1 transition shadow-sm"
+                      >
+                        <FileText className="w-3.5 h-3.5" /> PDF
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -149,3 +186,4 @@ export const AdminOrders: React.FC = () => {
     </div>
   );
 };
+
