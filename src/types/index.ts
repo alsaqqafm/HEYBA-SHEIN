@@ -7,6 +7,8 @@ export interface UserProfile {
   role: Role;
   email_verified: boolean;
   phone?: string;
+  governorate?: string;
+  area?: string;
   address?: string;
   created_at: string;
   updated_at?: string;
@@ -93,7 +95,11 @@ export interface Order {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+  delivery_country?: string;
+  delivery_governorate?: string;
+  delivery_area?: string;
   delivery_address: string;
+  recipient_name?: string;
   notes?: string;
   subtotal: number;
   discount: number;

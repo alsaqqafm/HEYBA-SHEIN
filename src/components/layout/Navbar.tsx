@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
             </button>
           </div>
 
-          {/* Search Bar Component */}
+          {/* Search Bar Component (RTL optimized with Left Search Button to prevent text overlap across 320px-1920px) */}
           <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl mx-2 hidden md:block">
             <div className="relative">
               <input
@@ -89,11 +89,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
                 value={searchQuery}
                 onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
                 placeholder="ابحث عن منتج، تصنيف، ملابس، أحذية..."
-                className="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-900 pr-11 pl-20 py-2.5 rounded-full border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 text-sm transition-all duration-200 outline-none"
+                className="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-900 pr-5 pl-14 py-2.5 rounded-full border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 text-sm transition-all duration-200 outline-none"
               />
               <button
                 type="submit"
-                className="absolute inset-y-1 right-1 px-3.5 bg-brand-600 hover:bg-brand-700 text-white rounded-full flex items-center justify-center transition-colors shadow-sm"
+                className="absolute inset-y-1 left-1.5 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-full flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                title="بحث"
               >
                 <Search className="w-4 h-4" />
               </button>
@@ -108,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
               <div className="relative">
                 <button
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                  className="flex items-center gap-2 py-1.5 px-3 rounded-full hover:bg-slate-100 border border-slate-200 text-slate-800 text-sm font-semibold transition-all"
+                  className="flex items-center gap-2 py-1.5 px-3 rounded-full hover:bg-slate-100 border border-slate-200 text-slate-800 text-sm font-semibold transition-all cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-xs">
                     {user.name.charAt(0)}
@@ -135,9 +136,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
                         onNavigate('/account');
                         setIsUserDropdownOpen(false);
                       }}
-                      className="w-full text-right px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      className="w-full text-right px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                     >
-                      <User className="w-4 h-4 text-brand-600" /> حسابي الطلبات
+                      <User className="w-4 h-4 text-brand-600" /> حسابي والطلبات
                     </button>
 
                     {isAdmin && (
@@ -146,7 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
                           onNavigate('/admin');
                           setIsUserDropdownOpen(false);
                         }}
-                        className="w-full text-right px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 font-bold flex items-center gap-2 border-t border-slate-100"
+                        className="w-full text-right px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 font-bold flex items-center gap-2 border-t border-slate-100 cursor-pointer"
                       >
                         <ShieldCheck className="w-4 h-4 text-purple-600" /> لوحة تحكم المدير
                       </button>
@@ -158,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
                         setIsUserDropdownOpen(false);
                         onNavigate('/');
                       }}
-                      className="w-full text-right px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-100"
+                      className="w-full text-right px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-100 cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" /> تسجيل الخروج
                     </button>
@@ -168,7 +169,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
             ) : (
               <button
                 onClick={() => onNavigate('/login')}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer"
               >
                 <User className="w-4 h-4 text-slate-600" />
                 <span>تسجيل الدخول</span>
@@ -178,7 +179,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
             {/* Cart Button */}
             <button
               onClick={() => onNavigate('/cart')}
-              className="relative p-2.5 rounded-full bg-brand-50 hover:bg-brand-100 text-brand-700 transition-all focus:outline-none"
+              className="relative p-2.5 rounded-full bg-brand-50 hover:bg-brand-100 text-brand-700 transition-all focus:outline-none cursor-pointer"
               title="السلة"
             >
               <ShoppingBag className="w-6 h-6" />
@@ -198,7 +199,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
               <button
                 key={cat.id}
                 onClick={() => onNavigate(cat.path)}
-                className={`py-1 transition-colors relative ${
+                className={`py-1 transition-colors relative cursor-pointer ${
                   currentPath === cat.path
                     ? 'text-brand-600 font-bold'
                     : 'text-slate-600 hover:text-brand-600'
@@ -214,7 +215,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
 
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-            <span>متوفر الآن: خصم 20% على المنتجات الجديدة</span>
+            <span>متوفر الآن: شحن وتوصيل لكافة محافظات اليمن</span>
           </div>
         </nav>
       </div>
@@ -243,7 +244,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
                 </button>
               </div>
 
-              {/* Mobile Search */}
+              {/* Mobile Search Input - RTL Optimized */}
               <form onSubmit={handleSearchSubmit} className="mt-4">
                 <div className="relative">
                   <input
@@ -251,9 +252,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
                     value={searchQuery}
                     onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
                     placeholder="ابحث بالاسم أو الوصف..."
-                    className="w-full bg-slate-100 pr-10 pl-4 py-2 rounded-xl text-sm outline-none"
+                    className="w-full bg-slate-100 pr-4 pl-12 py-2.5 rounded-xl text-sm outline-none text-slate-900 focus:bg-white focus:ring-2 focus:ring-brand-500 border border-slate-200"
                   />
-                  <Search className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
+                  <button
+                    type="submit"
+                    className="absolute left-2 top-2 p-1.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition"
+                  >
+                    <Search className="w-4 h-4" />
+                  </button>
                 </div>
               </form>
 

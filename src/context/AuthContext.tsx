@@ -16,40 +16,76 @@ interface AuthContextType {
 }
 
 const ADMIN_EMAIL = 'mohammed.f.saqqaf@gmail.com';
+const SESSION_KEY = 'heyba_auth_session_v2';
+const USERS_DB_KEY = 'heyba_registered_users_v2';
 
-const MOCK_ADMIN_USER: UserProfile = {
-  id: 'usr-admin-01',
-  name: 'محمد السقاف (المدير)',
-  email: ADMIN_EMAIL,
-  role: 'ADMIN',
-  email_verified: true,
-  phone: '772606709',
-  address: 'اليمن - إب',
-  created_at: new Date().toISOString(),
+const SEEDED_USERS: (UserProfile & { pass: string })[] = [
+  {
+    id: 'usr-admin-01',
+    name: 'محمد السقاف (المدير)',
+    email: ADMIN_EMAIL,
+    pass: '123456',
+    role: 'ADMIN',
+    email_verified: true,
+    phone: '772606709',
+    governorate: 'إب',
+    area: 'الظهار',
+    address: 'اليمن - إب - شارع العدين',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'usr-cust-01',
+    name: 'محمد علي',
+    email: 'm.ali@example.com',
+    pass: '123456',
+    role: 'CUSTOMER',
+    email_verified: true,
+    phone: '771234567',
+    governorate: 'إب',
+    area: 'المشنة',
+    address: 'اليمن - إب - قرب المستشفى',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+const getStoredUsersDB = (): (UserProfile & { pass?: string })[] => {
+  try {
+    const raw = localStorage.getItem(USERS_DB_KEY);
+    if (!raw) {
+      localStorage.setItem(USERS_DB_KEY, JSON.stringify(SEEDED_USERS));
+      return SEEDED_USERS;
+    }
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('Error reading users DB:', e);
+    return SEEDED_USERS;
+  }
 };
 
-const MOCK_CUSTOMER_USER: UserProfile = {
-  id: 'usr-cust-01',
-  name: 'محمد علي',
-  email: 'm.ali@example.com',
-  role: 'CUSTOMER',
-  email_verified: true,
-  phone: '772606709',
-  address: 'اليمن - إب',
-  created_at: new Date().toISOString(),
+const saveUserToDB = (newUser: UserProfile & { pass?: string }) => {
+  try {
+    const current = getStoredUsersDB();
+    const filtered = current.filter((u) => u.email.toLowerCase() !== newUser.email.toLowerCase());
+    const updated = [...filtered, newUser];
+    localStorage.setItem(USERS_DB_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Error saving user to DB:', e);
+  }
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(MOCK_CUSTOMER_USER);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [points, setPoints] = useState<number>(250);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Initialize Session on App Load
   useEffect(() => {
-    if (isSupabaseConfigured()) {
+    const initAuth = async () => {
       setIsLoading(true);
-      supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      if (isSupabaseConfigured()) {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
           const { data: profile } = await supabase
             .from('users')
@@ -60,27 +96,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (profile) {
             setUser(profile);
           }
-        }
-        setIsLoading(false);
-      });
-
-      const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          if (profile) setUser(profile);
         } else {
           setUser(null);
         }
-      });
 
-      return () => {
-        authListener.subscription.unsubscribe();
-      };
-    }
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            if (profile) setUser(profile);
+          } else {
+            setUser(null);
+          }
+        });
+
+        setIsLoading(false);
+        return () => {
+          authListener.subscription.unsubscribe();
+        };
+      } else {
+        // Local Persistent Session Check
+        try {
+          const storedSession = localStorage.getItem(SESSION_KEY);
+          if (storedSession) {
+            const parsedProfile: UserProfile = JSON.parse(storedSession);
+            setUser(parsedProfile);
+          } else {
+            setUser(null);
+          }
+        } catch (e) {
+          console.error('Error restoring local session:', e);
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const refreshPoints = async () => {
@@ -95,14 +150,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const total = data.reduce((acc, curr) => acc + curr.points, 0);
         setPoints(total);
       }
+    } else {
+      setPoints(270);
     }
   };
 
   const login = async (email: string, pass: string) => {
     setIsLoading(true);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+
       if (isSupabaseConfigured()) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: pass });
         if (error) throw error;
         if (data.user) {
           let { data: profile } = await supabase
@@ -111,7 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq('id', data.user.id)
             .single();
 
-          if (data.user.email?.toLowerCase() === ADMIN_EMAIL && profile?.role !== 'ADMIN') {
+          if (normalizedEmail === ADMIN_EMAIL && profile?.role !== 'ADMIN') {
             await supabase.from('users').update({ role: 'ADMIN' }).eq('id', data.user.id);
             profile = profile ? { ...profile, role: 'ADMIN' } : profile;
           }
@@ -120,21 +179,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return { success: true };
       } else {
-        const normalizedEmail = email.trim().toLowerCase();
-        if (normalizedEmail === ADMIN_EMAIL) {
-          setUser(MOCK_ADMIN_USER);
-        } else {
-          setUser({
-            ...MOCK_CUSTOMER_USER,
-            email: normalizedEmail,
-            name: normalizedEmail.split('@')[0],
-            role: 'CUSTOMER',
-          });
+        // Validate credentials against local stored users
+        const users = getStoredUsersDB();
+        const found = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+        if (!found) {
+          return { success: false, message: 'البريد الإلكتروني غير مسجل في النظام. يرجى إنشاء حساب جديد.' };
         }
+
+        if (found.pass && found.pass !== pass) {
+          return { success: false, message: 'كلمة المرور غير صحيحة. يرجى التأكد وإعادة المحاولة.' };
+        }
+
+        const profile: UserProfile = {
+          id: found.id,
+          name: found.name,
+          email: found.email,
+          role: found.email.toLowerCase() === ADMIN_EMAIL ? 'ADMIN' : found.role || 'CUSTOMER',
+          email_verified: found.email_verified ?? true,
+          phone: found.phone || '772606709',
+          governorate: found.governorate || 'إب',
+          area: found.area || 'الظهار',
+          address: found.address || 'اليمن - إب',
+          created_at: found.created_at || new Date().toISOString(),
+        };
+
+        setUser(profile);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
         return { success: true };
       }
     } catch (err: any) {
-      return { success: false, message: err.message || 'فشل تسجيل الدخول' };
+      return { success: false, message: err.message || 'فشل تسجيل الدخول. يرجى مراجعة البيانات.' };
     } finally {
       setIsLoading(false);
     }
@@ -143,12 +218,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (name: string, email: string, pass: string) => {
     setIsLoading(true);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+
       if (isSupabaseConfigured()) {
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: normalizedEmail,
           password: pass,
           options: {
-            data: { name, role: 'CUSTOMER' },
+            data: { name, role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER' },
           },
         });
         if (error) throw error;
@@ -156,8 +233,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const newUser: UserProfile = {
             id: data.user.id,
             name,
-            email,
-            role: 'CUSTOMER',
+            email: normalizedEmail,
+            role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER',
             email_verified: false,
             created_at: new Date().toISOString(),
           };
@@ -165,16 +242,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return { success: true, message: 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني.' };
       } else {
-        const newUser: UserProfile = {
+        const users = getStoredUsersDB();
+        const existing = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+        if (existing) {
+          return { success: false, message: 'البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول.' };
+        }
+
+        const newUser: UserProfile & { pass: string } = {
           id: `usr-${Date.now()}`,
           name,
-          email,
-          role: 'CUSTOMER',
+          email: normalizedEmail,
+          pass,
+          role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER',
           email_verified: false,
+          phone: '772606709',
+          governorate: 'إب',
+          area: 'الظهار',
+          address: 'اليمن - إب',
           created_at: new Date().toISOString(),
         };
-        setUser(newUser);
-        return { success: true, message: 'تم إنشاء الحساب بنجاح. أرسلنا رمز التحقق إلى بريدك.' };
+
+        saveUserToDB(newUser);
+
+        const { pass: _, ...profile } = newUser;
+        setUser(profile);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
+
+        return { success: true, message: 'تم إنشاء الحساب بنجاح. أرسلنا رمز التحقق إلى بريدك الإلكتروني.' };
       }
     } catch (err: any) {
       return { success: false, message: err.message || 'فشل إنشاء الحساب' };
@@ -185,7 +279,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyEmail = async () => {
     if (user) {
-      setUser({ ...user, email_verified: true });
+      const updatedUser = { ...user, email_verified: true };
+      setUser(updatedUser);
+      if (!isSupabaseConfigured()) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
+        saveUserToDB(updatedUser);
+      }
     }
   };
 
@@ -193,6 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured()) {
       await supabase.auth.signOut();
     }
+    localStorage.removeItem(SESSION_KEY);
     setUser(null);
   };
 
