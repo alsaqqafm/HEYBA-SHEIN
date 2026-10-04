@@ -25,8 +25,11 @@ import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminCategories } from './pages/admin/AdminCategories';
 import { AdminOrders } from './pages/admin/AdminOrders';
+import { AdminShippingCompanies } from './pages/admin/AdminShippingCompanies';
+import { AdminDeliveryAgents } from './pages/admin/AdminDeliveryAgents';
 import { AdminCustomers } from './pages/admin/AdminCustomers';
 import { AdminPoints } from './pages/admin/AdminPoints';
+import { AdminReviews } from './pages/admin/AdminReviews';
 import { AdminPayments } from './pages/admin/AdminPayments';
 import { AdminSettings } from './pages/admin/AdminSettings';
 
@@ -82,8 +85,11 @@ export function AppContent() {
           {adminTab === 'products' && <AdminProducts />}
           {adminTab === 'categories' && <AdminCategories />}
           {adminTab === 'orders' && <AdminOrders />}
+          {adminTab === 'shipping_companies' && <AdminShippingCompanies />}
+          {adminTab === 'delivery_agents' && <AdminDeliveryAgents />}
           {adminTab === 'customers' && <AdminCustomers />}
           {adminTab === 'points' && <AdminPoints />}
+          {adminTab === 'reviews' && <AdminReviews />}
           {adminTab === 'payments' && <AdminPayments />}
           {adminTab === 'settings' && <AdminSettings />}
         </AdminLayout>

@@ -200,10 +200,12 @@ export const fetchUserPointsBalance = async (userId: string): Promise<number> =>
   return (data || []).reduce((sum, row) => sum + row.points, 0);
 };
 
-export const apiAdminAdjustPoints = async (
+export const apiAddPointsTransaction = async (
   userId: string,
   amount: number,
-  description: string
+  type: 'EARNED_ORDER' | 'ADMIN_ADDITION' | 'ADMIN_DEDUCTION' | 'REDEMPTION',
+  description: string,
+  orderId?: string
 ) => {
   if (!isSupabaseConfigured()) return { success: true };
 
@@ -211,8 +213,9 @@ export const apiAdminAdjustPoints = async (
     {
       user_id: userId,
       points: amount,
-      type: amount >= 0 ? 'ADMIN_ADDITION' : 'ADMIN_DEDUCTION',
+      type,
       description,
+      order_id: orderId,
     },
   ]);
 

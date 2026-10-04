@@ -46,14 +46,14 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">الاسم الكامل *</label>
+            <label className="block text-xs font-extrabold text-slate-800 mb-1">أولاً: الاسم الكامل *</label>
             <div className="relative">
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: محمد علي"
+                placeholder="مثال: محمد علي أحمد"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none"
               />
               <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
@@ -61,7 +61,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني *</label>
+            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثانياً: البريد الإلكتروني *</label>
             <div className="relative">
               <input
                 type="email"
@@ -76,7 +76,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">كلمة المرور *</label>
+            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثالثاً: كلمة المرور *</label>
             <div className="relative">
               <input
                 type="password"

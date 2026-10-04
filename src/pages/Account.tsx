@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { User, Award, Package, FileText, CheckCircle2, LogOut, Eye } from 'lucide-react';
+import { User, Award, Package, FileText, CheckCircle2, LogOut, Eye, Star, Navigation } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { generateInvoicePDF, printInvoice } from '../lib/pdfGenerator';
 import { getUserOrdersFromStore } from '../lib/orders';
+import { getOrderStatusLabel } from '../lib/orderStatusConfig';
 import { InvoiceModal } from '../components/InvoiceModal';
+import { DeliveryConfirmationBox } from '../components/DeliveryConfirmationBox';
+import { OrderReviewModal } from '../components/OrderReviewModal';
+import { OrderTrackingModal } from '../components/OrderTrackingModal';
 import type { Order } from '../types';
 
 interface AccountProps {
@@ -51,6 +55,26 @@ const SAMPLE_ORDERS: Order[] = [
 export const Account: React.FC<AccountProps> = ({ onNavigate }) => {
   const { user, points, isEmailVerified, logout } = useAuth();
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<Order | null>(null);
+  const [reviewingOrder, setReviewingOrder] = useState<Order | null>(null);
+  const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
+  const [ordersList, setOrdersList] = useState<Order[]>(() => {
+    if (!user) return SAMPLE_ORDERS;
+    const stored = getUserOrdersFromStore(user.id);
+    return stored.length > 0 ? stored : SAMPLE_ORDERS;
+  });
+
+  const handleOrderUpdated = (updated: Order) => {
+    setOrdersList((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+    if (selectedInvoiceOrder && selectedInvoiceOrder.id === updated.id) {
+      setSelectedInvoiceOrder(updated);
+    }
+    if (reviewingOrder && reviewingOrder.id === updated.id) {
+      setReviewingOrder(updated);
+    }
+    if (trackingOrder && trackingOrder.id === updated.id) {
+      setTrackingOrder(updated);
+    }
+  };
 
   if (!user) {
     return (
@@ -67,13 +91,32 @@ export const Account: React.FC<AccountProps> = ({ onNavigate }) => {
     );
   }
 
-  const storedOrders = getUserOrdersFromStore(user.id);
-  const userOrders = storedOrders.length > 0 ? storedOrders : SAMPLE_ORDERS;
-
   return (
     <div className="space-y-8 pb-16">
       {selectedInvoiceOrder && (
-        <InvoiceModal order={selectedInvoiceOrder} onClose={() => setSelectedInvoiceOrder(null)} />
+        <InvoiceModal
+          order={selectedInvoiceOrder}
+          onClose={() => setSelectedInvoiceOrder(null)}
+          onOrderUpdated={handleOrderUpdated}
+        />
+      )}
+
+      {reviewingOrder && (
+        <OrderReviewModal
+          order={reviewingOrder}
+          onClose={() => setReviewingOrder(null)}
+          onReviewSubmitted={(review) => {
+            const updated = { ...reviewingOrder, review };
+            handleOrderUpdated(updated);
+          }}
+        />
+      )}
+
+      {trackingOrder && (
+        <OrderTrackingModal
+          order={trackingOrder}
+          onClose={() => setTrackingOrder(null)}
+        />
       )}
 
       <div className="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-600 rounded-3xl p-6 sm:p-8 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-brand">
@@ -116,7 +159,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate }) => {
           <Package className="w-5 h-5 text-brand-600" /> سجل الطلبات والفواتير
         </h2>
 
-        {userOrders.map((order) => (
+        {ordersList.map((order) => (
           <div
             key={order.id}
             className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4 hover:border-brand-200 transition"
@@ -132,7 +175,7 @@ export const Account: React.FC<AccountProps> = ({ onNavigate }) => {
 
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-extrabold border border-emerald-200 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> {order.status}
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {getOrderStatusLabel(order.status)}
                 </span>
 
                 <button
@@ -155,6 +198,27 @@ export const Account: React.FC<AccountProps> = ({ onNavigate }) => {
                 >
                   <FileText className="w-4 h-4" /> PDF
                 </button>
+
+                <button
+                  onClick={() => setTrackingOrder(order)}
+                  className="px-3.5 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition border border-sky-200"
+                >
+                  <Navigation className="w-4 h-4 text-sky-600" /> تتبع الطلب 📍
+                </button>
+
+                {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
+                  <button
+                    onClick={() => setReviewingOrder(order)}
+                    className={`px-3.5 py-2 font-bold text-xs rounded-xl flex items-center gap-1.5 transition border ${
+                      order.review
+                        ? 'bg-amber-50/80 hover:bg-amber-100 text-amber-800 border-amber-300'
+                        : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-amber-500 shadow-sm'
+                    }`}
+                  >
+                    <Star className={`w-4 h-4 ${order.review ? 'text-amber-500 fill-amber-400' : 'fill-white'}`} />
+                    <span>{order.review ? 'تقييمك ⭐' : 'تقييم الطلب'}</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -173,6 +237,12 @@ export const Account: React.FC<AccountProps> = ({ onNavigate }) => {
                 <span className="font-bold text-slate-800 truncate block">{order.delivery_address}</span>
               </div>
             </div>
+
+            {/* Customer Delivery Confirmation Section (Phase 8) */}
+            <DeliveryConfirmationBox
+              order={order}
+              onOrderUpdated={handleOrderUpdated}
+            />
 
             <div className="space-y-2 pt-1">
               {order.items?.map((item) => (

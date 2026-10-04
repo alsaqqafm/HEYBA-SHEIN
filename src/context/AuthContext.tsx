@@ -9,6 +9,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isEmailVerified: boolean;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
+  loginWithWhatsApp: (name: string, phone: string, pass?: string, isSignup?: boolean) => Promise<{ success: boolean; message?: string }>;
   signup: (name: string, email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   verifyEmail: () => Promise<void>;
   logout: () => Promise<void>;
@@ -65,7 +66,9 @@ const getStoredUsersDB = (): (UserProfile & { pass?: string })[] => {
 const saveUserToDB = (newUser: UserProfile & { pass?: string }) => {
   try {
     const current = getStoredUsersDB();
-    const filtered = current.filter((u) => u.email.toLowerCase() !== newUser.email.toLowerCase());
+    const filtered = current.filter(
+      (u) => u.email.toLowerCase() !== newUser.email.toLowerCase() && (!newUser.phone || u.phone !== newUser.phone)
+    );
     const updated = [...filtered, newUser];
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(updated));
   } catch (e) {
@@ -184,7 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let found = users.find((u) => u.email.toLowerCase() === normalizedEmail);
 
         if (!found) {
-          // Auto-register new email seamlessly so login always succeeds smoothly
+          // Auto-register new email seamlessly so login succeeds
           const newProfile: UserProfile & { pass: string } = {
             id: `usr-${Date.now()}`,
             name: normalizedEmail.split('@')[0],
@@ -228,9 +231,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithWhatsApp = async (name: string, phone: string, pass: string = '123456', isSignup: boolean = false) => {
+    setIsLoading(true);
+    try {
+      const cleanPhone = phone.replace(/\s+/g, '');
+
+      if (!cleanPhone || cleanPhone.length < 6) {
+        return { success: false, message: 'يرجى إدخال رقم WhatsApp صحيح مكون من 6 أرقام على الأقل.' };
+      }
+
+      if (isSignup && (!name || !name.trim())) {
+        return { success: false, message: 'يرجى كتابة الاسم الكامل أولاً قبل إنشاء الحساب.' };
+      }
+
+      const users = getStoredUsersDB();
+      let found = users.find((u) => u.phone === cleanPhone || u.email === `${cleanPhone}@whatsapp.user`);
+
+      if (!found) {
+        const finalName = name && name.trim() ? name.trim() : `مستخدم ${cleanPhone.slice(-4)}`;
+        const newProfile: UserProfile & { pass: string } = {
+          id: `usr-wa-${Date.now()}`,
+          name: finalName,
+          email: `${cleanPhone}@whatsapp.user`,
+          pass,
+          role: 'CUSTOMER',
+          email_verified: true,
+          phone: cleanPhone,
+          whatsapp: cleanPhone,
+          login_provider: 'whatsapp',
+          governorate: 'إب',
+          area: 'الظهار',
+          address: 'اليمن - إب',
+          created_at: new Date().toISOString(),
+        };
+
+        saveUserToDB(newProfile);
+        found = newProfile;
+      } else if (isSignup) {
+        return { success: false, message: 'رقم الـ WhatsApp هذا مسجل مسبقاً. يرجى تسجيل الدخول بدلاً من التسجيل.' };
+      }
+
+      const profile: UserProfile = {
+        id: found.id,
+        name: found.name,
+        email: found.email,
+        role: 'CUSTOMER',
+        email_verified: true,
+        phone: found.phone || cleanPhone,
+        whatsapp: cleanPhone,
+        login_provider: 'whatsapp',
+        governorate: found.governorate || 'إب',
+        area: found.area || 'الظهار',
+        address: found.address || 'اليمن - إب',
+        created_at: found.created_at || new Date().toISOString(),
+      };
+
+      setUser(profile);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'فشل التسجيل برقم الـ WhatsApp' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const signup = async (name: string, email: string, pass: string) => {
     setIsLoading(true);
     try {
+      if (!name || !name.trim()) {
+        return { success: false, message: 'يرجى إدخال الاسم الكامل أولاً.' };
+      }
+
       const normalizedEmail = email.trim().toLowerCase();
 
       if (isSupabaseConfigured()) {
@@ -245,7 +317,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.user) {
           const newUser: UserProfile = {
             id: data.user.id,
-            name,
+            name: name.trim(),
             email: normalizedEmail,
             role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER',
             email_verified: false,
@@ -263,7 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const newUser: UserProfile & { pass: string } = {
           id: `usr-${Date.now()}`,
-          name,
+          name: name.trim(),
           email: normalizedEmail,
           pass,
           role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER',
@@ -318,6 +390,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin: user?.role === 'ADMIN',
         isEmailVerified: user?.email_verified ?? false,
         login,
+        loginWithWhatsApp,
         signup,
         verifyEmail,
         logout,

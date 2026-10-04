@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { ShieldCheck, CheckCircle2, Copy, Wallet, CreditCard, ArrowLeft, AlertTriangle, MapPin, Truck, Phone, FileText } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Copy, Wallet, CreditCard, ArrowLeft, MapPin, Truck, Phone, FileText, Award } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { apiCreateOrderAtomic } from '../lib/supabase';
-import type { Order, PaymentMethod } from '../types';
+import type { Order, PaymentMethod, UserProfile } from '../types';
 import { saveOrderToStore } from '../lib/orders';
 import { InvoiceModal } from '../components/InvoiceModal';
+import { OrderAuthModal } from '../components/OrderAuthModal';
+import { OrderVerificationModal } from '../components/OrderVerificationModal';
+import { LocationPickerModal } from '../components/LocationPickerModal';
 import { YEMEN_GOVERNORATES } from '../data/yemenLocations';
 
 interface CheckoutProps {
@@ -15,10 +18,11 @@ interface CheckoutProps {
 
 export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
   const { items, subtotal, clearCart } = useCart();
-  const { user, isEmailVerified } = useAuth();
+  const { user, points } = useAuth();
   const { showToast } = useToast();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('JEEB');
+  const [usePointsDiscount, setUsePointsDiscount] = useState(false);
   
   // Delivery Location States (Yemen)
   const [governorate, setGovernorate] = useState(user?.governorate || 'إب');
@@ -36,67 +40,27 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
 
   const [createdOrderObj, setCreatedOrderObj] = useState<Order | null>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [pendingUserForVerification, setPendingUserForVerification] = useState<UserProfile | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [verifiedUserForOrder, setVerifiedUserForOrder] = useState<UserProfile | null>(null);
 
   // Dynamic Shipping Fee based on Selected Governorate
   const currentGovObj = YEMEN_GOVERNORATES.find((g) => g.name === governorate) || YEMEN_GOVERNORATES[0];
   const deliveryFee = subtotal > 0 ? currentGovObj.deliveryFee : 0;
-  const grandTotal = subtotal + deliveryFee;
-
-  // Requirement #2: Block checkout if account is unverified!
-  if (user && !isEmailVerified) {
-    return (
-      <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-amber-200 space-y-4 max-w-lg mx-auto my-12 shadow-xl">
-        <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto">
-          <AlertTriangle className="w-8 h-8" />
-        </div>
-        <h2 className="text-xl font-extrabold text-slate-900">يتطلب إتمام الطلب توثيق البريد الإلكتروني</h2>
-        <p className="text-xs text-slate-600 leading-relaxed">
-          عذراً، لحماية الحسابات والطلبات، لا يمكنك إتمام الشراء حتى تقوم بتأكيد رمز التحقق الخاص ببريدك: <strong>{user.email}</strong>.
-        </p>
-        <button
-          onClick={() => onNavigate('/verify-email')}
-          className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-full font-bold text-xs shadow-lg transition"
-        >
-          الانتقال لتأكيد البريد الإلكتروني ✉️
-        </button>
-      </div>
-    );
-  }
+  
+  // Loyalty Points Discount (100 pts = 1000 YER, max 50% subtotal)
+  const maxPointsDiscount = Math.min((points || 0) * 10, Math.floor(subtotal * 0.5));
+  const pointsDiscountValue = usePointsDiscount ? maxPointsDiscount : 0;
+  const grandTotal = Math.max(0, subtotal - pointsDiscountValue + deliveryFee);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     showToast('تم نسخ رقم الحساب للحافظة');
   };
 
-  const handleSubmitOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!user) {
-      onNavigate('/login');
-      return;
-    }
-
-    // Strict Delivery Details Validation
-    if (!recipientName.trim()) {
-      showToast('يرجى كتابة اسم المستلم الكامل', 'error');
-      return;
-    }
-
-    if (!phone.trim() || phone.length < 6) {
-      showToast('يرجى كتابة رقم هاتف صحبح للتواصل والواتساب', 'error');
-      return;
-    }
-
-    if (!governorate.trim() || !area.trim() || !detailedAddress.trim()) {
-      showToast('يرجى استكمال اختيار المحافظة والمنطقة والعنوان التفصيلي للتوصيل', 'error');
-      return;
-    }
-
-    if (!paymentRef.trim()) {
-      showToast('يرجى كتابة رقم العملية المرجعي أو إشعار التحويل لتأكيد الطلب', 'error');
-      return;
-    }
-
+  const processOrderCreation = async (activeUser: any, lat?: number, lng?: number) => {
     setIsSubmitting(true);
     try {
       const fullDeliveryAddress = `اليمن - محافظة ${governorate} - منطقة ${area} - ${detailedAddress} (المستلم: ${recipientName} - هاتف: ${phone})`;
@@ -107,9 +71,9 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
       }));
 
       const res: any = await apiCreateOrderAtomic({
-        userId: user.id,
+        userId: activeUser.id,
         customerName: recipientName,
-        customerEmail: user.email,
+        customerEmail: activeUser.email,
         customerPhone: phone,
         deliveryAddress: fullDeliveryAddress,
         paymentMethod,
@@ -125,25 +89,27 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
         const newOrder: Order = {
           id: res.order_id || `ord-${Date.now()}`,
           order_number: orderNum,
-          user_id: user.id,
+          user_id: activeUser.id,
           customer_name: recipientName,
-          customer_email: user.email,
+          customer_email: activeUser.email,
           customer_phone: phone,
           delivery_country: 'اليمن',
           delivery_governorate: governorate,
           delivery_area: area,
           delivery_address: fullDeliveryAddress,
           recipient_name: recipientName,
+          latitude: lat,
+          longitude: lng,
           notes: deliveryNotes,
           payment_method: paymentMethod,
           payment_reference: paymentRef,
           payment_sender_name: senderName,
           status: 'NEW',
           subtotal,
-          discount: 0,
+          discount: pointsDiscountValue,
           delivery_fee: deliveryFee,
           total: grandTotal,
-          points_earned: Math.floor(subtotal * 0.01),
+          points_earned: Math.floor(Math.max(0, subtotal - pointsDiscountValue) * 0.01),
           created_at: new Date().toISOString(),
           items: items.map((item, idx) => ({
             id: `item-${Date.now()}-${idx}`,
@@ -168,6 +134,46 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
       setIsSubmitting(false);
       showToast(err.message || 'حدث خطأ أثناء معالجة الطلب بالمخزون', 'error');
     }
+  };
+
+  const handleSubmitOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Strict Delivery Details Validation
+    if (!recipientName.trim()) {
+      showToast('يرجى كتابة اسم المستلم الكامل أولاً', 'error');
+      return;
+    }
+
+    if (!phone.trim() || phone.length < 6) {
+      showToast('يرجى كتابة رقم هاتف صحيح للتواصل والواتساب', 'error');
+      return;
+    }
+
+    if (!governorate.trim() || !area.trim() || !detailedAddress.trim()) {
+      showToast('يرجى استكمال اختيار المحافظة والمنطقة والعنوان التفصيلي للتوصيل', 'error');
+      return;
+    }
+
+    if (!paymentRef.trim()) {
+      showToast('يرجى كتابة رقم العملية المرجعي أو إشعار التحويل لتأكيد الطلب', 'error');
+      return;
+    }
+
+    // PHASE 1 & 2 & 3 FLOW: Auth -> Verification -> Location Picker -> Complete Order!
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (!user.email_verified) {
+      setPendingUserForVerification(user);
+      setShowVerificationModal(true);
+      return;
+    }
+
+    setVerifiedUserForOrder(user);
+    setShowLocationModal(true);
   };
 
   if (orderCreatedId) {
@@ -220,6 +226,55 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-8 pb-16">
+      {showAuthModal && (
+        <OrderAuthModal
+          onSuccess={() => {
+            setShowAuthModal(false);
+            const storedSession = localStorage.getItem('heyba_auth_session_v2');
+            const activeUser: UserProfile | null = storedSession ? JSON.parse(storedSession) : user;
+            if (activeUser) {
+              if (!activeUser.email_verified) {
+                setPendingUserForVerification(activeUser);
+                setShowVerificationModal(true);
+              } else {
+                setVerifiedUserForOrder(activeUser);
+                setShowLocationModal(true);
+              }
+            }
+          }}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
+
+      {showVerificationModal && pendingUserForVerification && (
+        <OrderVerificationModal
+          user={pendingUserForVerification}
+          orderPhone={phone}
+          onVerified={() => {
+            setShowVerificationModal(false);
+            const verifiedUser = { ...pendingUserForVerification, email_verified: true };
+            setVerifiedUserForOrder(verifiedUser);
+            setShowLocationModal(true);
+          }}
+          onClose={() => setShowVerificationModal(false)}
+        />
+      )}
+
+      {showLocationModal && (
+        <LocationPickerModal
+          governorate={governorate}
+          onConfirmLocation={(lat, lng) => {
+            setShowLocationModal(false);
+            processOrderCreation(verifiedUserForOrder || user, lat, lng);
+          }}
+          onSkipLocation={() => {
+            setShowLocationModal(false);
+            processOrderCreation(verifiedUserForOrder || user);
+          }}
+          onClose={() => setShowLocationModal(false)}
+        />
+      )}
+
       <h1 className="text-2xl font-black text-slate-900">إتمام الطلب الشراء والتوصيل</h1>
 
       <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -478,18 +533,50 @@ export const Checkout: React.FC<CheckoutProps> = ({ onNavigate }) => {
             ))}
           </div>
 
+          {/* Points Redemption Option */}
+          {(points || 0) > 0 && (
+            <div className="bg-amber-50 border border-amber-200/80 p-3.5 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-extrabold text-amber-900 flex items-center gap-1">
+                  <Award className="w-4 h-4 text-amber-600 fill-amber-400" />
+                  <span>رصيد نقاطك: {points} نقطة</span>
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={usePointsDiscount}
+                    onChange={(e) => setUsePointsDiscount(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-tight">
+                {usePointsDiscount
+                  ? `تم تفعيل خصم بقيمة ${pointsDiscountValue.toLocaleString()} ر.ي من رصيد النقاط.`
+                  : `استبدل نقاطك بخصم يصل إلى ${maxPointsDiscount.toLocaleString()} ر.ي على هذا الطلب.`}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2 text-xs pt-3 border-t border-slate-100">
             <div className="flex justify-between text-slate-600">
               <span>مجموع المنتجات:</span>
               <span className="font-bold">{subtotal.toLocaleString()} ر.ي</span>
             </div>
+            {usePointsDiscount && pointsDiscountValue > 0 && (
+              <div className="flex justify-between text-amber-700 font-bold bg-amber-50/80 p-1.5 rounded-lg border border-amber-200">
+                <span>خصم استبدال النقاط:</span>
+                <span>-{pointsDiscountValue.toLocaleString()} ر.ي</span>
+              </div>
+            )}
             <div className="flex justify-between text-slate-600">
               <span>شحن وتوصيل ({governorate}):</span>
               <span className="font-bold text-brand-600">{deliveryFee.toLocaleString()} ر.ي</span>
             </div>
             <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50 p-2 rounded-lg">
               <span>نقاط تضاف لحسابك:</span>
-              <span>+{Math.round(subtotal * 0.01)} نقطة</span>
+              <span>+{Math.round(Math.max(0, subtotal - pointsDiscountValue) * 0.01)} نقطة</span>
             </div>
           </div>
 

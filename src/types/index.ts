@@ -7,6 +7,8 @@ export interface UserProfile {
   role: Role;
   email_verified: boolean;
   phone?: string;
+  whatsapp?: string;
+  login_provider?: 'email' | 'whatsapp';
   governorate?: string;
   area?: string;
   address?: string;
@@ -66,14 +68,31 @@ export interface Cart {
 
 export type OrderStatus =
   | 'NEW'
-  | 'PENDING_PAYMENT'
-  | 'PAYMENT_CONFIRMED'
+  | 'UNDER_REVIEW'
+  | 'CONFIRMED'
   | 'PREPARING'
-  | 'READY'
+  | 'PREPARED'
+  | 'SENT_TO_SHIPPING'
+  | 'WITH_AGENT'
+  | 'IN_TRANSIT'
   | 'DELIVERED'
   | 'COMPLETED'
   | 'REJECTED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  // Backward compatibility aliases if any:
+  | 'PENDING_PAYMENT'
+  | 'PAYMENT_CONFIRMED'
+  | 'READY';
+
+export interface OrderStatusHistoryItem {
+  id: string;
+  order_id: string;
+  status: OrderStatus;
+  status_label: string;
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+}
 
 export type PaymentMethod = 'JEEB' | 'KURAIMI';
 
@@ -88,6 +107,41 @@ export interface OrderItem {
   total: number;
 }
 
+export interface ShippingCompany {
+  id: string;
+  name: string;
+  logo_url?: string;
+  phone: string;
+  whatsapp?: string;
+  governorate: string;
+  area: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+  status: 'active' | 'inactive';
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export type DeliveryAgentStatus = 'available' | 'busy' | 'unavailable' | 'suspended';
+
+export interface DeliveryAgent {
+  id: string;
+  name: string;
+  phone: string;
+  whatsapp?: string;
+  shipping_company_id: string;
+  shipping_company_name: string;
+  governorate: string;
+  area: string;
+  status: DeliveryAgentStatus;
+  avatar_url?: string;
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface Order {
   id: string;
   order_number: string;
@@ -100,6 +154,17 @@ export interface Order {
   delivery_area?: string;
   delivery_address: string;
   recipient_name?: string;
+  latitude?: number;
+  longitude?: number;
+  shipping_company_id?: string;
+  shipping_company_name?: string;
+  shipping_company_phone?: string;
+  shipping_company_whatsapp?: string;
+  shipping_company_address?: string;
+  delivery_agent_id?: string;
+  delivery_agent_name?: string;
+  delivery_agent_phone?: string;
+  delivery_agent_whatsapp?: string;
   notes?: string;
   subtotal: number;
   discount: number;
@@ -113,6 +178,39 @@ export interface Order {
   created_at: string;
   updated_at?: string;
   items?: OrderItem[];
+  order_status_history?: OrderStatusHistoryItem[];
+  status_history?: OrderStatusHistoryItem[];
+  tracking?: OrderTracking;
+  delivery_confirmed?: boolean;
+  delivery_confirmed_at?: string;
+  delivery_confirmation_note?: string;
+  delivery_confirmation_user_id?: string;
+  points_awarded?: boolean;
+  review?: OrderReview;
+}
+
+export interface OrderReview {
+  id: string;
+  order_id: string;
+  user_id: string;
+  customer_name: string;
+  rating: number; // 1 to 5
+  delivery_rating?: number; // 1 to 5
+  comment: string;
+  created_at: string;
+}
+
+export interface OrderTracking {
+  id: string;
+  order_id: string;
+  delivery_agent_id?: string;
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number;
+  updated_at?: string;
+  tracking_enabled: boolean;
+  tracking_status: 'PENDING_ASSIGNMENT' | 'AWAITING_AGENT' | 'AGENT_ASSIGNED' | 'IN_TRANSIT' | 'DELIVERED' | 'UNAVAILABLE';
+  notes?: string;
 }
 
 export interface PointTransaction {

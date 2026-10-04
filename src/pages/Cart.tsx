@@ -1,7 +1,6 @@
 import React from 'react';
 import { Trash2, ArrowLeft, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 
 interface CartProps {
   onNavigate: (path: string) => void;
@@ -9,7 +8,6 @@ interface CartProps {
 
 export const Cart: React.FC<CartProps> = ({ onNavigate }) => {
   const { items, updateQuantity, removeFromCart, subtotal, deliveryFee, grandTotal } = useCart();
-  const { user } = useAuth();
 
   if (items.length === 0) {
     return (
@@ -124,14 +122,8 @@ export const Cart: React.FC<CartProps> = ({ onNavigate }) => {
           </div>
 
           <button
-            onClick={() => {
-              if (!user) {
-                onNavigate('/login');
-              } else {
-                onNavigate('/checkout');
-              }
-            }}
-            className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-extrabold text-sm shadow-brand hover:scale-[1.01] transition flex items-center justify-center gap-2"
+            onClick={() => onNavigate('/checkout')}
+            className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-extrabold text-sm shadow-brand hover:scale-[1.01] transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>إتمام الطلب الشراء</span>
             <ArrowLeft className="w-4 h-4" />
