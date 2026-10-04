@@ -46,14 +46,14 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-extrabold text-slate-800 mb-1">أولاً: الاسم الكامل *</label>
+            <label className="block text-xs font-extrabold text-slate-800 mb-1">أولاً: الاسم الكامل / Full Name *</label>
             <div className="relative">
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: محمد علي أحمد"
+                placeholder="الاسم بالعربي / Full Name"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none"
               />
               <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
@@ -61,31 +61,31 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثانياً: البريد الإلكتروني أو رقم الجوال *</label>
+            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثانياً: البريد الإلكتروني أو رقم الجوال / Email or Phone *</label>
             <div className="relative">
               <input
                 type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com أو 772606709"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none dir-ltr text-left"
+                placeholder="البريد الإلكتروني أو رقم الجوال / Email or Phone"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right"
               />
               <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثالثاً: كلمة المرور *</label>
+            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثالثاً: كلمة المرور / Password (8 خانات على الأقل) *</label>
             <div className="relative">
               <input
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="6 أحرف على الأقل"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none dir-ltr text-left"
+                placeholder="•••••••• (8 خانات على الأقل)"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none tracking-widest text-left dir-ltr"
               />
               <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
             </div>

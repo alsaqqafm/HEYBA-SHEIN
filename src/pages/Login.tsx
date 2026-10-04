@@ -51,15 +51,15 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني أو رقم الجوال *</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني أو رقم الجوال / Email or Phone *</label>
             <div className="relative">
               <input
                 type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com أو 772606709"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none dir-ltr text-left"
+                placeholder="البريد الإلكتروني أو رقم الجوال / Email or Phone"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right"
               />
               <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
             </div>
@@ -67,7 +67,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-slate-700">كلمة المرور *</label>
+              <label className="block text-xs font-bold text-slate-700">كلمة المرور / Password *</label>
               <button
                 type="button"
                 onClick={() => onNavigate('/forgot-password')}
@@ -83,7 +83,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none dir-ltr text-left"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none tracking-widest text-left dir-ltr"
               />
               <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
             </div>
