@@ -61,14 +61,14 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثانياً: البريد الإلكتروني *</label>
+            <label className="block text-xs font-extrabold text-slate-800 mb-1">ثانياً: البريد الإلكتروني أو رقم الجوال *</label>
             <div className="relative">
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
+                placeholder="name@example.com أو 772606709"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none dir-ltr text-left"
               />
               <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />

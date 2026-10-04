@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { UserProfile } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import {
+  normalizePhone,
+  isPhoneNumber,
+  isPhoneMatching,
+  getPhoneSearchVariants,
+} from '../lib/phoneUtils';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -8,9 +14,9 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   isEmailVerified: boolean;
-  login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
+  login: (identifier: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   loginWithWhatsApp: (name: string, phone: string, pass?: string, isSignup?: boolean) => Promise<{ success: boolean; message?: string }>;
-  signup: (name: string, email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
+  signup: (name: string, emailOrPhone: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   verifyEmail: () => Promise<void>;
   logout: () => Promise<void>;
   refreshPoints: () => Promise<void>;
@@ -29,6 +35,7 @@ const SEEDED_USERS: (UserProfile & { pass: string })[] = [
     role: 'ADMIN',
     email_verified: true,
     phone: '772606709',
+    whatsapp: '772606709',
     governorate: 'إب',
     area: 'الظهار',
     address: 'اليمن - إب - شارع العدين',
@@ -42,6 +49,7 @@ const SEEDED_USERS: (UserProfile & { pass: string })[] = [
     role: 'CUSTOMER',
     email_verified: true,
     phone: '771234567',
+    whatsapp: '771234567',
     governorate: 'إب',
     area: 'المشنة',
     address: 'اليمن - إب - قرب المستشفى',
@@ -63,12 +71,49 @@ const getStoredUsersDB = (): (UserProfile & { pass?: string })[] => {
   }
 };
 
+const findUserInLocalDB = (identifier: string): (UserProfile & { pass?: string }) | undefined => {
+  if (!identifier) return undefined;
+  const users = getStoredUsersDB();
+  const clean = identifier.trim();
+
+  // 1. Direct Email Match
+  if (clean.includes('@')) {
+    const normEmail = clean.toLowerCase();
+    return users.find((u) => u.email.toLowerCase() === normEmail);
+  }
+
+  // 2. Phone / WhatsApp Match with Full Normalization
+  const normPhone = normalizePhone(clean);
+  const variants = getPhoneSearchVariants(clean);
+
+  return users.find((u) => {
+    // Match phone or whatsapp fields
+    if (isPhoneMatching(u.phone, clean) || isPhoneMatching(u.whatsapp, clean)) return true;
+    if (normPhone && (normalizePhone(u.phone || '') === normPhone || normalizePhone(u.whatsapp || '') === normPhone)) return true;
+
+    // Match against user email if registered as whatsapp pseudo-email
+    const userEmail = (u.email || '').toLowerCase();
+    if (variants.some((v) => userEmail === v.toLowerCase())) return true;
+    if (normPhone && userEmail.startsWith(normPhone)) return true;
+
+    // Exact raw string match
+    if (u.phone === clean || u.whatsapp === clean) return true;
+
+    return false;
+  });
+};
+
 const saveUserToDB = (newUser: UserProfile & { pass?: string }) => {
   try {
     const current = getStoredUsersDB();
-    const filtered = current.filter(
-      (u) => u.email.toLowerCase() !== newUser.email.toLowerCase() && (!newUser.phone || u.phone !== newUser.phone)
-    );
+    const filtered = current.filter((u) => {
+      // Don't keep if same email
+      if (u.email && newUser.email && u.email.toLowerCase() === newUser.email.toLowerCase()) return false;
+      // Don't keep if matching phone
+      if (newUser.phone && isPhoneMatching(u.phone, newUser.phone)) return false;
+      if (newUser.whatsapp && isPhoneMatching(u.whatsapp, newUser.whatsapp)) return false;
+      return true;
+    });
     const updated = [...filtered, newUser];
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(updated));
   } catch (e) {
@@ -158,14 +203,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (email: string, pass: string) => {
+  const login = async (identifier: string, pass: string) => {
     setIsLoading(true);
     try {
-      const normalizedEmail = email.trim().toLowerCase();
+      if (!identifier || !identifier.trim()) {
+        return { success: false, message: 'يرجى إدخال البريد الإلكتروني أو رقم الجوال.' };
+      }
+
+      const cleanIdentifier = identifier.trim();
+      const isPhone = isPhoneNumber(cleanIdentifier);
+      const normPhone = normalizePhone(cleanIdentifier);
 
       if (isSupabaseConfigured()) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: pass });
+        let authEmail = cleanIdentifier.toLowerCase();
+        if (isPhone) {
+          // Attempt to find registered email by phone
+          try {
+            const { data: dbUser } = await supabase
+              .from('users')
+              .select('email, phone')
+              .or(`phone.eq.${normPhone},whatsapp.eq.${normPhone}`)
+              .limit(1)
+              .maybeSingle();
+
+            if (dbUser?.email) {
+              authEmail = dbUser.email;
+            } else {
+              authEmail = `${normPhone}@whatsapp.user`;
+            }
+          } catch (e) {
+            authEmail = `${normPhone}@whatsapp.user`;
+          }
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: pass,
+        });
+
         if (error) throw error;
+
         if (data.user) {
           let { data: profile } = await supabase
             .from('users')
@@ -173,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq('id', data.user.id)
             .single();
 
-          if (normalizedEmail === ADMIN_EMAIL && profile?.role !== 'ADMIN') {
+          if (authEmail === ADMIN_EMAIL && profile?.role !== 'ADMIN') {
             await supabase.from('users').update({ role: 'ADMIN' }).eq('id', data.user.id);
             profile = profile ? { ...profile, role: 'ADMIN' } : profile;
           }
@@ -182,28 +259,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return { success: true };
       } else {
-        // Validate credentials against local stored users
-        const users = getStoredUsersDB();
-        let found = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+        // Local Persistent Mode: Check using unified multi-format finder
+        const found = findUserInLocalDB(cleanIdentifier);
 
         if (!found) {
-          // Auto-register new email seamlessly so login succeeds
-          const newProfile: UserProfile & { pass: string } = {
-            id: `usr-${Date.now()}`,
-            name: normalizedEmail.split('@')[0],
-            email: normalizedEmail,
-            pass: pass || '123456',
-            role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER',
-            email_verified: true,
-            phone: '772606709',
-            governorate: 'إب',
-            area: 'الظهار',
-            address: 'اليمن - إب',
-            created_at: new Date().toISOString(),
-          };
-          saveUserToDB(newProfile);
-          found = newProfile;
-        } else if (found.pass && found.pass !== pass) {
+          if (cleanIdentifier.toLowerCase() === ADMIN_EMAIL) {
+            // Seed admin user
+            const adminProfile: UserProfile & { pass: string } = {
+              id: 'usr-admin-01',
+              name: 'محمد السقاف (المدير)',
+              email: ADMIN_EMAIL,
+              pass: pass || '123456',
+              role: 'ADMIN',
+              email_verified: true,
+              phone: '772606709',
+              whatsapp: '772606709',
+              governorate: 'إب',
+              area: 'الظهار',
+              address: 'اليمن - إب',
+              created_at: new Date().toISOString(),
+            };
+            saveUserToDB(adminProfile);
+            setUser(adminProfile);
+            localStorage.setItem(SESSION_KEY, JSON.stringify(adminProfile));
+            return { success: true };
+          }
+
+          if (isPhone) {
+            return {
+              success: false,
+              message: 'رقم الجوال غير مسجل لدينا. يرجى إنشاء حساب جديد أولاً أو التحقق من الرقم.',
+            };
+          } else {
+            return {
+              success: false,
+              message: 'البريد الإلكتروني غير مسجل لدينا. يرجى إنشاء حساب جديد أولاً.',
+            };
+          }
+        }
+
+        // Check password validity
+        if (found.pass && pass && found.pass !== pass) {
           return { success: false, message: 'كلمة المرور غير صحيحة. يرجى التأكد وإعادة المحاولة.' };
         }
 
@@ -211,9 +307,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: found.id,
           name: found.name,
           email: found.email,
-          role: found.email.toLowerCase() === ADMIN_EMAIL ? 'ADMIN' : found.role || 'CUSTOMER',
+          role: found.email?.toLowerCase() === ADMIN_EMAIL ? 'ADMIN' : found.role || 'CUSTOMER',
           email_verified: found.email_verified ?? true,
-          phone: found.phone || '772606709',
+          phone: found.phone || (isPhone ? normPhone : '772606709'),
+          whatsapp: found.whatsapp || found.phone || (isPhone ? normPhone : undefined),
           governorate: found.governorate || 'إب',
           area: found.area || 'الظهار',
           address: found.address || 'اليمن - إب',
@@ -234,30 +331,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithWhatsApp = async (name: string, phone: string, pass: string = '123456', isSignup: boolean = false) => {
     setIsLoading(true);
     try {
-      const cleanPhone = phone.replace(/\s+/g, '');
+      const normPhone = normalizePhone(phone);
 
-      if (!cleanPhone || cleanPhone.length < 6) {
-        return { success: false, message: 'يرجى إدخال رقم WhatsApp صحيح مكون من 6 أرقام على الأقل.' };
+      if (!normPhone || normPhone.length < 6) {
+        return { success: false, message: 'يرجى إدخال رقم جوال / WhatsApp صحيح مكون من 6 أرقام على الأقل.' };
       }
 
       if (isSignup && (!name || !name.trim())) {
         return { success: false, message: 'يرجى كتابة الاسم الكامل أولاً قبل إنشاء الحساب.' };
       }
 
-      const users = getStoredUsersDB();
-      let found = users.find((u) => u.phone === cleanPhone || u.email === `${cleanPhone}@whatsapp.user`);
+      const found = findUserInLocalDB(phone);
 
-      if (!found) {
-        const finalName = name && name.trim() ? name.trim() : `مستخدم ${cleanPhone.slice(-4)}`;
+      if (isSignup) {
+        if (found) {
+          return { success: false, message: 'رقم الجوال هذا مسجل مسبقاً بالفعل. يرجى اختيار تسجيل الدخول.' };
+        }
+
+        const finalName = name && name.trim() ? name.trim() : `مستخدم ${normPhone.slice(-4)}`;
         const newProfile: UserProfile & { pass: string } = {
           id: `usr-wa-${Date.now()}`,
           name: finalName,
-          email: `${cleanPhone}@whatsapp.user`,
-          pass,
+          email: `${normPhone}@whatsapp.user`,
+          pass: pass || '123456',
           role: 'CUSTOMER',
           email_verified: true,
-          phone: cleanPhone,
-          whatsapp: cleanPhone,
+          phone: normPhone,
+          whatsapp: normPhone,
           login_provider: 'whatsapp',
           governorate: 'إب',
           area: 'الظهار',
@@ -266,51 +366,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         saveUserToDB(newProfile);
-        found = newProfile;
-      } else if (isSignup) {
-        return { success: false, message: 'رقم الـ WhatsApp هذا مسجل مسبقاً. يرجى تسجيل الدخول بدلاً من التسجيل.' };
+
+        const { pass: _, ...profile } = newProfile;
+        setUser(profile);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
+        return { success: true };
+      } else {
+        // Login Flow with Phone
+        if (!found) {
+          return {
+            success: false,
+            message: 'رقم الجوال هذا غير مسجل لدينا. يرجى النقر على "إنشاء حساب جديد".',
+          };
+        }
+
+        if (found.pass && pass && found.pass !== pass) {
+          return { success: false, message: 'كلمة المرور غير صحيحة. يرجى التأكد وإعادة المحاولة.' };
+        }
+
+        const profile: UserProfile = {
+          id: found.id,
+          name: found.name,
+          email: found.email,
+          role: 'CUSTOMER',
+          email_verified: true,
+          phone: found.phone || normPhone,
+          whatsapp: found.whatsapp || normPhone,
+          login_provider: 'whatsapp',
+          governorate: found.governorate || 'إب',
+          area: found.area || 'الظهار',
+          address: found.address || 'اليمن - إب',
+          created_at: found.created_at || new Date().toISOString(),
+        };
+
+        setUser(profile);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
+        return { success: true };
       }
-
-      const profile: UserProfile = {
-        id: found.id,
-        name: found.name,
-        email: found.email,
-        role: 'CUSTOMER',
-        email_verified: true,
-        phone: found.phone || cleanPhone,
-        whatsapp: cleanPhone,
-        login_provider: 'whatsapp',
-        governorate: found.governorate || 'إب',
-        area: found.area || 'الظهار',
-        address: found.address || 'اليمن - إب',
-        created_at: found.created_at || new Date().toISOString(),
-      };
-
-      setUser(profile);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
-      return { success: true };
     } catch (err: any) {
-      return { success: false, message: err.message || 'فشل التسجيل برقم الـ WhatsApp' };
+      return { success: false, message: err.message || 'فشل معالجة رقم الجوال' };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signup = async (name: string, email: string, pass: string) => {
+  const signup = async (name: string, emailOrPhone: string, pass: string) => {
     setIsLoading(true);
     try {
       if (!name || !name.trim()) {
         return { success: false, message: 'يرجى إدخال الاسم الكامل أولاً.' };
       }
 
-      const normalizedEmail = email.trim().toLowerCase();
+      const cleanInput = emailOrPhone.trim();
+
+      // If user provided a phone number in the signup field
+      if (isPhoneNumber(cleanInput)) {
+        return await loginWithWhatsApp(name, cleanInput, pass, true);
+      }
+
+      const normalizedEmail = cleanInput.toLowerCase();
 
       if (isSupabaseConfigured()) {
         const { data, error } = await supabase.auth.signUp({
           email: normalizedEmail,
           password: pass,
           options: {
-            data: { name, role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER' },
+            data: { name: name.trim(), role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER' },
           },
         });
         if (error) throw error;
@@ -327,10 +448,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return { success: true, message: 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني.' };
       } else {
-        const users = getStoredUsersDB();
-        const existing = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+        const existing = findUserInLocalDB(normalizedEmail);
         if (existing) {
-          return { success: false, message: 'البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول.' };
+          return { success: false, message: 'البريد الإلكتروني أو رقم الهاتف مسجل بالفعل. يرجى تسجيل الدخول.' };
         }
 
         const newUser: UserProfile & { pass: string } = {
@@ -341,6 +461,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: normalizedEmail === ADMIN_EMAIL ? 'ADMIN' : 'CUSTOMER',
           email_verified: false,
           phone: '772606709',
+          whatsapp: '772606709',
           governorate: 'إب',
           area: 'الظهار',
           address: 'اليمن - إب',
