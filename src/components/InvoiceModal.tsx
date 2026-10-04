@@ -24,6 +24,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ order: initialOrder,
     setCurrentOrder(initialOrder);
   }, [initialOrder]);
 
+  // Lock background scrolling while modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   if (!currentOrder) return null;
   const order = currentOrder;
 
@@ -48,8 +56,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ order: initialOrder,
         />
       )}
 
-      <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl border border-slate-100 my-auto relative space-y-6 animate-in fade-in zoom-in duration-200">
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl border border-slate-100 my-auto relative space-y-6 animate-in fade-in zoom-in duration-200"
+        >
         
         {/* Header Action Controls */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 no-print">

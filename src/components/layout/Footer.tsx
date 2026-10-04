@@ -111,9 +111,19 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
 
         {/* Bottom copyright line */}
-        <div className="pt-8 border-t border-slate-800 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="pt-8 border-t border-slate-800 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 HEYBA Shein | جميع الحقوق محفوظة لمنصة هيبة شي إن.</p>
-          <p className="text-[11px]">تصميم وتطوير بهوية زرقاء مخصصة 100%.</p>
+          <p className="text-xs flex items-center justify-center gap-1.5 flex-wrap">
+            <span>تم تطوير هذه المنصة بواسطة</span>
+            <a
+              href="https://heybasoft.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sky-400 hover:text-sky-300 font-extrabold underline transition inline-flex items-center gap-1"
+            >
+              شركة هيبة سوفت (HEYBA SOFT)
+            </a>
+          </p>
         </div>
       </div>
     </footer>

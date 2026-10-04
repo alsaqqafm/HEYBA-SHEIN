@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mail, Phone, Lock, User, UserPlus, LogIn, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -14,6 +14,14 @@ export const OrderAuthModal: React.FC<OrderAuthModalProps> = ({ onSuccess, onClo
 
   const [authMethod, setAuthMethod] = useState<'email' | 'whatsapp'>('email');
   const [isSignup, setIsSignup] = useState<boolean>(false);
+
+  // Lock background scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   // Form Fields - Name MUST be first when creating an account!
   const [name, setName] = useState('');
@@ -74,8 +82,14 @@ export const OrderAuthModal: React.FC<OrderAuthModalProps> = ({ onSuccess, onClo
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-auto relative space-y-6 animate-in fade-in zoom-in duration-200 text-right">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-auto relative space-y-6 animate-in fade-in zoom-in duration-200 text-right"
+      >
         
         {/* Close Button */}
         <button

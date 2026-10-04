@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, X, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
 import type { Order, OrderReview } from '../types';
 import { submitOrderReview, getReviewByOrderId } from '../lib/reviews';
@@ -25,6 +25,14 @@ export const OrderReviewModal: React.FC<OrderReviewModalProps> = ({
   const [deliveryRating, setDeliveryRating] = useState<number>(existingReview?.delivery_rating || 5);
   const [comment, setComment] = useState<string>(existingReview?.comment || '');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Lock background scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +67,14 @@ export const OrderReviewModal: React.FC<OrderReviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-auto relative space-y-5 animate-in fade-in zoom-in duration-200 text-right">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-auto relative space-y-5 animate-in fade-in zoom-in duration-200 text-right"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">

@@ -81,15 +81,17 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
             </button>
           </div>
 
-          {/* Search Bar Component (RTL optimized with Left Search Button to prevent text overlap across 320px-1920px) */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl mx-2 hidden md:block">
+          {/* Desktop Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl mx-2 hidden sm:block">
             <div className="relative">
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery && setSearchQuery(e.target.value);
+                }}
                 placeholder="ابحث عن منتج، تصنيف، ملابس، أحذية..."
-                className="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-900 pr-5 pl-14 py-2.5 rounded-full border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 text-sm transition-all duration-200 outline-none"
+                className="w-full bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-900 pr-5 pl-14 py-2.5 rounded-full border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 text-xs sm:text-sm font-bold transition-all duration-200 outline-none"
               />
               <button
                 type="submit"
@@ -191,6 +193,26 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate, searchQ
             </button>
           </div>
         </div>
+
+        {/* Mobile Search Bar Row (Always visible on mobile screens) */}
+        <form onSubmit={handleSearchSubmit} className="block sm:hidden pb-3">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
+              placeholder="ابحث عن المنتجات، الأزياء، الأحذية..."
+              className="w-full bg-slate-100 focus:bg-white text-slate-900 pr-4 pl-12 py-2 rounded-2xl border border-slate-200 focus:border-brand-500 text-xs font-bold outline-none"
+            />
+            <button
+              type="submit"
+              className="absolute inset-y-1 left-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl flex items-center justify-center shadow-sm cursor-pointer"
+              title="بحث"
+            >
+              <Search className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </form>
 
         {/* Desktop Category Navigation */}
         <nav className="hidden lg:flex items-center justify-between py-2.5 border-t border-slate-100 text-sm font-semibold">
