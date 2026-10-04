@@ -50,32 +50,19 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني أو رقم الجوال / Email or Phone *</label>
-            <div className="relative">
-              <input
-                type="text"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="البريد الإلكتروني أو رقم الجوال / Email or Phone"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right"
-              />
-              <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
-            </div>
+          <div className="relative">
+            <input
+              type="text"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="البريد الإلكتروني أو رقم الجوال / Email or Phone"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3.5 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right"
+            />
+            <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-4" />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-slate-700">كلمة المرور / Password *</label>
-              <button
-                type="button"
-                onClick={() => onNavigate('/forgot-password')}
-                className="text-[11px] font-bold text-brand-600 hover:underline"
-              >
-                نسيت كلمة المرور؟
-              </button>
-            </div>
             <div className="relative">
               <input
                 type="password"
@@ -83,9 +70,18 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none tracking-widest text-left dir-ltr"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3.5 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none tracking-widest text-left dir-ltr"
               />
-              <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
+              <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-4" />
+            </div>
+            <div className="flex justify-end mt-1.5">
+              <button
+                type="button"
+                onClick={() => onNavigate('/forgot-password')}
+                className="text-[11px] font-bold text-brand-600 hover:underline"
+              >
+                نسيت كلمة المرور؟
+              </button>
             </div>
           </div>
 

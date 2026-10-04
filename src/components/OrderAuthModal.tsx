@@ -151,76 +151,56 @@ export const OrderAuthModal: React.FC<OrderAuthModalProps> = ({ onSuccess, onClo
           
           {/* REQUIREMENT #3: Name field MUST BE FIRST when creating an account! */}
           {isSignup && (
-            <div>
-              <label className="block text-xs font-extrabold text-slate-800 mb-1">
-                أولاً: الاسم الكامل / Full Name *
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="الاسم بالعربي / Full Name"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-2.5 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none"
-                />
-                <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
-              </div>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="الاسم / Full Name"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none"
+              />
+              <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
             </div>
           )}
 
           {authMethod === 'email' ? (
-            <div>
-              <label className="block text-xs font-extrabold text-slate-800 mb-1">
-                {isSignup ? 'ثانياً: البريد الإلكتروني أو رقم الجوال / Email or Phone *' : 'البريد الإلكتروني أو رقم الجوال / Email or Phone *'}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="البريد الإلكتروني أو رقم الجوال / Email or Phone"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-2.5 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right"
-                />
-                <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
-              </div>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="البريد الإلكتروني أو رقم الجوال / Email or Phone"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right"
+              />
+              <Mail className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
             </div>
           ) : (
-            <div>
-              <label className="block text-xs font-extrabold text-slate-800 mb-1">
-                {isSignup ? 'ثانياً: رقم الواتساب أو الجوال / WhatsApp or Phone *' : 'رقم الواتساب أو الجوال / WhatsApp or Phone *'}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  placeholder="رقم الواتساب أو الجوال / WhatsApp"
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-2.5 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right font-mono"
-                />
-                <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
-              </div>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                placeholder="رقم الواتساب أو الجوال / WhatsApp"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none text-right font-mono"
+              />
+              <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
             </div>
           )}
 
-          <div>
-            <label className="block text-xs font-extrabold text-slate-800 mb-1">
-              {isSignup ? 'ثالثاً: كلمة المرور / Password (8 خانات على الأقل) *' : 'كلمة المرور / Password *'}
-            </label>
-            <div className="relative">
-              <input
-                type="password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="•••••••• (8 خانات على الأقل)"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-2.5 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none tracking-widest text-left dir-ltr"
-              />
-              <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
-            </div>
+          <div className="relative">
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-3 text-xs font-bold focus:bg-white focus:border-brand-500 outline-none tracking-widest text-left dir-ltr"
+            />
+            <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
           </div>
 
           <button
